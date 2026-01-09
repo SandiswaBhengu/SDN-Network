@@ -1,1 +1,77 @@
-comment
+---
+- name: Configure interfaces and OSPF on FRR routers
+  hosts: frr_ospf
+  gather_facts: false
+  become: true   # Use root privileges
+
+  vars:
+    router_configs:
+      FRR2:
+        interfaces:
+          - { name: eth0, ip: 192.168.122.40/24 }
+          - { name: eth1, ip: 192.168.200.77/30 }
+          - { name: eth2, ip: 172.16.250.49/30 }
+        ospf_networks:
+          - "192.168.122.0/24 area 0"
+          - "172.16.250.48/30 area 0"
+          - "192.168.200.76/30 area 0"
+      FRR3:
+        interfaces:
+          - { name: eth0, ip: 192.168.122.30/24 }
+          - { name: eth1, ip: 10.10.10.81/28 }
+        ospf_networks:
+          - "192.168.122.0/24 area 0"
+          - "10.10.10.80/28 area 0"
+      FRR4:
+        interfaces:
+          - { name: eth0, ip: 192.168.0.90/30 }
+          - { name: eth1, ip: 203.120.130.93/30 }
+          - { name: eth2, ip: 172.25.75.105/28 }
+        ospf_networks:
+          - "192.168.0.88/30 area 0"
+          - "203.120.130.92/30 area 0"
+          - "172.25.75.104/28 area 0"
+      FRR5:
+        interfaces:
+          - { name: eth0, ip: 172.30.30.86/30 }
+          - { name: eth1, ip: 203.120.130.94/30 }
+          - { name: eth2, ip: 10.50.60.101/28 }
+        ospf_networks:
+          - "172.30.30.84/30 area 0"
+          - "203.120.130.92/30 area 0"
+          - "10.50.60.100/28 area 0"
+      FRR14:
+        interfaces:
+          - { name: eth0, ip: 192.168.0.89/30 }
+          - { name: eth1, ip: 172.30.30.85/30 }
+          - { name: eth2, ip: 192.168.122.20/24 }
+        ospf_networks:
+          - "192.168.122.0/24 area 0"
+          - "192.168.0.88/30 area 0"
+          - "172.30.30.84/30 area 0"
+
+  tasks:
+    - name: Configure interfaces and OSPF
+      shell: |
+        vtysh -c "conf t" \
+        {% for intf in router_configs[inventory_hostname].interfaces %}
+        -c "int {{ intf.name }}" -c "ip address {{ intf.ip }}" -c "exit" \
+        {% endfor %}
+        -c "router ospf" \
+        {% for net in router_configs[inventory_hostname].ospf_networks %}
+        -c "network {{ net }}" \
+        {% endfor %}
+        -c "exit" -c "exit" -c "write"
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
+    - name: Verify OSPF configuration
+      shell: vtysh -c "show running-config"
+      register: ospf_status
+      ignore_errors: yes
+
+    - name: Show configuration result
+      debug:
+        msg: "{{ inventory_hostname }} OSPF config:\n{{ ospf_status.stdout | default('No config applied') }}"
+
