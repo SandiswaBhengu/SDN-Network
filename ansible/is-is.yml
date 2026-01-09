@@ -1,1 +1,59 @@
-ks
+- name: Configure IS-IS on FRR routers
+  hosts: frr_isis
+  gather_facts: false
+  become: true
+
+  vars:
+    router_configs:
+      FRR6:
+        interfaces:
+          - { name: eth0, ip: 10.20.30.5/30 }
+          - { name: eth1, ip: 10.0.5.1/30 }
+          - { name: eth2, ip: 192.168.10.17/30 }
+        isis_net: "49.0001.0000.0000.0006.00"
+
+      FRR10:
+        interfaces:
+          - { name: eth0, ip: 192.168.122.41/24 }
+          - { name: eth1, ip: 10.20.30.6/30 }
+          - { name: eth2, ip: 172.16.100.9/30 }
+          - { name: eth4, ip: 10.100.100.1/30 }  # New link to FRR8
+        isis_net: "49.0001.0000.0000.0010.00"
+
+      FRR7:
+        interfaces:
+          - { name: eth0, ip: 172.16.100.10/30 }
+          - { name: eth1, ip: 172.31.200.14/30 }
+          - { name: eth2, ip: 172.168.10.18/30 }
+        isis_net: "49.0001.0000.0000.0007.00"
+
+      FRR8:
+        interfaces:
+          - { name: eth0, ip: 10.0.5.2/30 }
+          - { name: eth1, ip: 172.31.200.13/30 }
+          - { name: eth2, ip: 192.168.150.109/30 }
+          - { name: eth4, ip: 10.100.100.2/30 }  # New link to FRR10
+        isis_net: "49.0001.0000.0000.0008.00"
+
+  tasks:
+    - name: Configure interfaces for IS-IS
+      shell: |
+        vtysh -c "conf t" \
+        {% for intf in router_configs[inventory_hostname].interfaces %} \
+        -c "interface {{ intf.name }}" -c "ip address {{ intf.ip }}" -c "ip router isis CORE" -c "exit" \
+        {% endfor %} \
+        -c "router isis CORE" -c "net {{ router_configs[inventory_hostname].isis_net }}" -c "exit" -c "write"
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
+    - name: Verify IS-IS neighbors
+      shell: vtysh -c "show isis neighbor"
+      register: isis_neighbors
+      ignore_errors: yes
+
+    - name: Show IS-IS neighbor result
+      debug:
+        msg: "{{ inventory_hostname }} IS-IS neighbors:\n{{ isis_neighbors.stdout | default('No neighbors') }}"
+
+
