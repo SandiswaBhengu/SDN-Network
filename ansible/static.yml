@@ -1,1 +1,69 @@
-hey
+---
+- name: Configure FRR interfaces and static routing using vtysh
+  hosts: frr_static
+  become: yes
+  gather_facts: no
+
+  vars:
+
+    router_interfaces:
+      FRR9:
+        eth0: "192.168.55.22/30"
+        eth1: "198.18.40.29/30"
+        eth2: "192.168.120.110/30"
+
+      FRR11:
+        eth0: "192.168.55.21/30"
+        eth1: "100.64.50.25/30"
+        eth2: "10.99.77.37/30"
+        eth3: "10.1.1.1/30"
+
+      FRR12:
+        eth0: "172.20.44.34/30"
+        eth1: "100.64.50.26/30"
+        eth2: "192.168.122.39/30"
+
+      FRR13:
+        eth0: "198.18.40.30/30"
+        eth1: "172.20.44.33/30"
+        eth2: "10.99.77.38/30"
+
+    router_static_routes:
+      FRR9:
+        - { dest: "10.1.1.0/30", via: "192.168.55.21" }
+        - { dest: "100.64.50.24/30", via: "192.168.55.21" }
+        - { dest: "172.20.44.32/30", via: "198.18.40.30" }
+
+      FRR11:
+        - { dest: "198.18.40.28/30", via: "192.168.55.22" }
+        - { dest: "172.20.44.32/30", via: "10.99.77.38" }
+
+      FRR12:
+        - { dest: "192.168.55.20/30", via: "100.64.50.25" }
+        - { dest: "198.18.40.28/30", via: "172.20.44.33" }
+
+      FRR13:
+        - { dest: "192.168.55.20/30", via: "198.18.40.29" }
+        - { dest: "100.64.50.24/30", via: "172.20.44.34" }
+
+  tasks:
+
+    - name: Configure interfaces in FRR
+      raw: >
+        /bin/sh -c 'vtysh
+        -c "configure terminal"
+        -c "interface {{ item.key }}"
+        -c "ip address {{ item.value }}"
+        -c "no shutdown"'
+      loop: "{{ router_interfaces[inventory_hostname] | dict2items }}"
+
+    - name: Configure static routes in FRR
+      raw: >
+        /bin/sh -c 'vtysh
+        -c "configure terminal"
+        -c "ip route {{ item.dest }} {{ item.via }}"'
+      loop: "{{ router_static_routes[inventory_hostname] }}"
+
+    - name: Save FRR configuration
+      raw: /bin/sh -c 'vtysh -c "write memory"'
+
