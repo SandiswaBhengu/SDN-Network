@@ -1,1 +1,47 @@
+pipeline {
+    agent any
+
+    environment {
+        ANSIBLE_DIR = '/var/lib/jenkins/ansible'
+    }
+
+    stages {
+
+        stage('Dry Run') {
+            steps {
+                sh '''
+                cd $ANSIBLE_DIR
+                echo "=== DRY RUN: IS-IS Configuration ==="
+                ansible-playbook -i nodes.ini is-si.yml --limit frr_isis --check
+                '''
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                cd $ANSIBLE_DIR
+                echo "=== DEPLOY: IS-IS Configuration ==="
+                ansible-playbook -i nodes.ini is-si.yml --limit frr_isis
+                '''
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sh '''
+                cd $ANSIBLE_DIR
+                echo "=== VERIFY: IS-IS Configuration ==="
+                ansible-playbook -i nodes.ini is-si.yml --limit frr_isis
+                '''
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "IS-IS pipeline failed — check logs!"
+        }
+    }
+}
 
