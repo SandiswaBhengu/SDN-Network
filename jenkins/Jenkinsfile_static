@@ -1,1 +1,46 @@
+pipeline {
+    agent any
 
+    environment {
+        ANSIBLE_DIR = '/var/lib/jenkins/ansible'
+    }
+
+    stages {
+
+        stage('Dry Run') {
+            steps {
+                sh '''
+                cd $ANSIBLE_DIR
+                echo "=== DRY RUN: Static Routing ==="
+                ansible-playbook -i nodes.ini static.yml --limit frr_static --check
+                '''
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                cd $ANSIBLE_DIR
+                echo "=== DEPLOY: Static Routing ==="
+                ansible-playbook -i nodes.ini static.yml --limit frr_static
+                '''
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sh '''
+                cd $ANSIBLE_DIR
+                echo "=== VERIFY: Static Routing ==="
+                ansible-playbook -i nodes.ini static.yml --limit frr_static
+                '''
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "Static routing pipeline failed — check logs!"
+        }
+    }
+}
