@@ -1,1 +1,47 @@
+pipeline {
+    agent any
+
+    environment {
+        ANSIBLE_DIR = '/var/lib/jenkins/ansible'
+    }
+
+    stages {
+
+        stage('Dry Run') {
+            steps {
+                sh '''
+                cd $ANSIBLE_DIR
+                echo "=== DRY RUN: OSPF Configuration ==="
+                ansible-playbook -i nodes.ini ospf.yml --limit frr_ospf --check
+                '''
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                cd $ANSIBLE_DIR
+                echo "=== DEPLOY: OSPF Configuration ==="
+                ansible-playbook -i nodes.ini ospf.yml --limit frr_ospf
+                '''
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sh '''
+                cd $ANSIBLE_DIR
+                echo "=== VERIFY: OSPF Configuration ==="
+                ansible-playbook -i nodes.ini ospf.yml --limit frr_ospf
+                '''
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "OSPF pipeline failed — check logs!"
+        }
+    }
+}
 
