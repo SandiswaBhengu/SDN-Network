@@ -5,6 +5,6 @@
 </head>
 <body>
 <h1>Welcome to Backend 2!</h1>
-<p>This page is served by Backend 2 (192.168.122.129)</p>
+<p>This page is served by Backend 2 (Backend2-IP)</p>
 </body>
 </html>
