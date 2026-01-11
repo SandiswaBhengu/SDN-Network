@@ -1,0 +1,19 @@
+# installation of ODL
+sudo apt update
+sudo apt install -y openjdk-8-jdk
+echo 'export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64' >> ~/.bashrc
+echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+tar -xvzf distribution-karaf-0.3.0-Lithium.tar.gz
+mv distribution-karaf-0.3.0-Lithium /opt/odl-lithium
+sleep 6
+cd /opt/odl-lithium/bin
+./karaf
+
+# install ODL features
+
+feature:install odl-restconf
+feature:install odl-l2switch-switch
+feature:install odl-openflowplugin-all
+feature:install odl-dlux-all
+feature:install odl-mdsal-apidocs
