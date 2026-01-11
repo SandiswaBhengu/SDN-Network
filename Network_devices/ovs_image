@@ -1,6 +1,0 @@
-## Build Open vSwitch Docker Image
-
-### Build the image
-```bash
-docker build -t gns3/openvswitch .
-
