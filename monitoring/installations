@@ -1,0 +1,9 @@
+sudo apt update
+sudo apt install -y wget
+sudo apt install -y tar
+
+
+# install, uzip and configure  prometheus on nano /etc/prometheus/prometheus.yml file
+wget https://github.com/prometheus/prometheus/releases/download/v3.9.1/prometheus-3.9.1.linux-amd64.tar.gz
+tar -xvzf prometheus-3.9.1.linux-amd64.tar.gz
+
