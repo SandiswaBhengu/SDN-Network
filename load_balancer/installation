@@ -1,0 +1,12 @@
+# install nginx for Backend 1 and 2 and configure the HTML page on /var/www/html/index.html file 
+apt update
+apt install -y nginx
+service nginx start
+systemctl enable nginx
+
+
+# install and configure HAProxy on /etc/haproxy/haproxy.cfg file
+sudo apt update
+sudo apt install -y haproxy
+sudo systemctl enable haproxy
+sudo systemctl restart haproxy
